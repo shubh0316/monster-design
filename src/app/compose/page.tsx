@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 
 interface Contact {
-  id: number;
+  id: string;
   company_name: string;
   email: string;
   contact_name: string | null;

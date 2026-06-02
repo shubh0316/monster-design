@@ -30,6 +30,13 @@ Key details to include naturally:
 - Keep it concise (3-4 short paragraphs max)
 - End with a gentle call to action (e.g., a quick call or to check the portfolio)
 
+CRITICAL — spam filter rules (strictly follow these):
+- NEVER use these words: "free", "guarantee", "limited time", "act now", "click here", "special offer", "exclusive deal", "100%", "no obligation", "risk-free", "winner", "congratulations", "urgent", "incredible"
+- Do NOT use all-caps words or excessive exclamation marks
+- Do NOT start sentences with "I" — vary sentence structure
+- Write like a real person reaching out, not a marketing template
+- Subject line must be specific and natural, not clickbait
+
 Return ONLY the email content in this exact JSON format with no extra text:
 {
   "subject": "email subject line here",

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 
 interface Contact {
-  id: number;
+  id: string;
   company_name: string;
   email: string;
   contact_name: string | null;
@@ -38,7 +38,7 @@ export default function ContactsPage() {
     load();
   }
 
-  async function deleteContact(id: number) {
+  async function deleteContact(id: string) {
     await fetch(`/api/contacts?id=${id}`, { method: 'DELETE' });
     load();
   }
@@ -84,7 +84,10 @@ export default function ContactsPage() {
         return;
       }
       const res = await fetch('/api/contacts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(rows) });
-      const data = await res.json();
+      const text = await res.text();
+      if (!text) throw new Error(`Server returned empty response (status ${res.status})`);
+      const data = JSON.parse(text);
+      if (!res.ok) throw new Error(data.error ?? `Server error ${res.status}`);
       alert(`Imported ${data.inserted} contacts from ${rows.length} rows.`);
       load();
     } catch (err) {

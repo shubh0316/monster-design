@@ -33,6 +33,12 @@ Write a SHORT, friendly follow-up email (2-3 paragraphs max). Rules:
 - Mention portfolio link naturally if appropriate: https://www.behance.net/monster_design_
 - End with an easy, low-pressure call to action
 
+CRITICAL — spam filter rules:
+- NEVER use: "free", "guarantee", "limited time", "act now", "click here", "special offer", "urgent", "incredible", "winner"
+- No all-caps words, no excessive exclamation marks
+- Write like a real person, not a marketing template
+- Subject line must be natural, not clickbait
+
 Return ONLY this JSON with no extra text:
 {
   "subject": "Re: ${original_subject}",

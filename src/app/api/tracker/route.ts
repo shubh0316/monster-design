@@ -1,26 +1,49 @@
 import { NextResponse } from 'next/server';
-import getDb from '@/lib/db';
+import { getDb } from '@/lib/db';
 
 export async function GET() {
-  const db = getDb();
-  const rows = db.prepare(`
-    SELECT
-      c.id as contact_id,
-      c.company_name,
-      c.email,
-      c.contact_name,
-      se.id as sent_email_id,
-      se.subject,
-      se.body as original_body,
-      se.sent_at,
-      se.status,
-      COUNT(r.id) as reply_count
-    FROM contacts c
-    LEFT JOIN sent_emails se ON se.contact_id = c.id
-    LEFT JOIN replies r ON r.contact_id = c.id
-    WHERE se.id IS NOT NULL
-    GROUP BY se.id
-    ORDER BY se.sent_at DESC
-  `).all();
-  return NextResponse.json(rows);
+  try {
+    const db = await getDb();
+    const rows = await db.collection('sent_emails').aggregate([
+      {
+        $lookup: {
+          from: 'contacts',
+          localField: 'contact_id',
+          foreignField: '_id',
+          as: 'contact',
+        },
+      },
+      { $unwind: '$contact' },
+      {
+        $lookup: {
+          from: 'replies',
+          localField: 'contact_id',
+          foreignField: 'contact_id',
+          as: 'repl',
+        },
+      },
+      {
+        $project: {
+          contact_id: 1,
+          company_name: '$contact.company_name',
+          email: '$contact.email',
+          contact_name: '$contact.contact_name',
+          subject: 1,
+          original_body: '$body',
+          sent_at: 1,
+          status: 1,
+          reply_count: { $size: '$repl' },
+        },
+      },
+      { $sort: { sent_at: -1 } },
+    ]).toArray();
+
+    return NextResponse.json(rows.map((r) => ({
+      ...r,
+      sent_email_id: r._id.toString(),
+      contact_id: r.contact_id.toString(),
+    })));
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
 }

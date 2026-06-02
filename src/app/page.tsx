@@ -22,8 +22,8 @@ export default function Dashboard() {
       const total_contacts = contacts.length;
       const emails_sent = tracker.length;
       const repliesCount = replies.length;
-      const contactsWithEmail = new Set(tracker.map((t: { contact_id: number }) => t.contact_id));
-      const pending = contacts.filter((c: { id: number }) => !contactsWithEmail.has(c.id)).length;
+      const contactsWithEmail = new Set(tracker.map((t: { contact_id: string }) => t.contact_id));
+      const pending = contacts.filter((c: { id: string }) => !contactsWithEmail.has(c.id)).length;
       setStats({ total_contacts, emails_sent, replies: repliesCount, pending });
     }
     load();

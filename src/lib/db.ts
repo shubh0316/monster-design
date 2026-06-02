@@ -1,63 +1,37 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
+import { MongoClient, Db } from 'mongodb';
 
-const DB_DIR = path.join(process.cwd(), 'data');
-const DB_PATH = path.join(DB_DIR, 'emailer.db');
+const uri = process.env.MONGODB_URI!;
+const dbName = process.env.MONGODB_DB ?? 'monster-design-email';
 
-if (!fs.existsSync(DB_DIR)) {
-  fs.mkdirSync(DB_DIR, { recursive: true });
+let client: MongoClient;
+let db: Db;
+
+declare global {
+  // eslint-disable-next-line no-var
+  var _mongoClient: MongoClient | undefined;
 }
 
-let db: Database.Database;
+export async function getDb(): Promise<Db> {
+  if (db) return db;
 
-function getDb(): Database.Database {
-  if (!db) {
-    db = new Database(DB_PATH);
-    db.pragma('journal_mode = WAL');
-    initSchema(db);
+  // Reuse connection in dev (hot reload creates new module instances)
+  if (process.env.NODE_ENV === 'development') {
+    if (!global._mongoClient) {
+      global._mongoClient = new MongoClient(uri);
+      await global._mongoClient.connect();
+    }
+    client = global._mongoClient;
+  } else {
+    if (!client) {
+      client = new MongoClient(uri);
+      await client.connect();
+    }
   }
+
+  db = client.db(dbName);
+
+  // Ensure unique index on contacts.email
+  await db.collection('contacts').createIndex({ email: 1 }, { unique: true });
+
   return db;
 }
-
-function initSchema(db: Database.Database) {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS contacts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      company_name TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      contact_name TEXT,
-      notes TEXT,
-      created_at TEXT DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS sent_emails (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      contact_id INTEGER NOT NULL,
-      subject TEXT NOT NULL,
-      body TEXT NOT NULL,
-      sent_at TEXT DEFAULT (datetime('now')),
-      status TEXT DEFAULT 'sent',
-      FOREIGN KEY (contact_id) REFERENCES contacts(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS replies (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      sent_email_id INTEGER,
-      contact_id INTEGER NOT NULL,
-      from_email TEXT NOT NULL,
-      subject TEXT,
-      body TEXT NOT NULL,
-      received_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (sent_email_id) REFERENCES sent_emails(id),
-      FOREIGN KEY (contact_id) REFERENCES contacts(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS settings (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
-    );
-  `);
-}
-
-export default getDb;
