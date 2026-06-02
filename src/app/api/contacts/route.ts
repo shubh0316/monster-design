@@ -52,10 +52,10 @@ export async function POST(request: NextRequest) {
     if (Array.isArray(body)) {
       let inserted = 0;
       for (const row of body) {
-        if (!row.email || !row.company_name) continue;
+        if (!row.email) continue;
         try {
           await col.insertOne({
-            company_name: row.company_name,
+            company_name: row.company_name || row.email.split('@')[1]?.split('.')[0] || row.email,
             email: row.email.toLowerCase().trim(),
             contact_name: row.contact_name ?? null,
             notes: row.notes ?? null,

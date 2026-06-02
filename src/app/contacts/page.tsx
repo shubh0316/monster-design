@@ -49,26 +49,41 @@ export default function ContactsPage() {
     const rawRows = XLSX.utils.sheet_to_json<Record<string, string>>(sheet, { defval: '' });
     if (rawRows.length === 0) throw new Error('No data found in the Excel file');
 
-    // Normalize headers to find company and email columns
     const firstRow = rawRows[0];
     const headers = Object.keys(firstRow);
     const find = (keywords: string[]) =>
       headers.find((h) => keywords.some((k) => h.toLowerCase().includes(k))) ?? '';
 
-    const companyCol = find(['company', 'business', 'org']);
+    const companyCol = find(['company', 'business', 'org', 'brand', 'client', 'account']);
     const emailCol = find(['email', 'e-mail', 'mail']);
-    const contactCol = find(['contact', 'person', 'name', 'first']);
-    const notesCol = find(['note', 'remark', 'comment']);
+    const contactCol = find(['contact', 'person', 'first name', 'firstname', 'full name', 'fullname', 'name']);
+    const notesCol = find(['note', 'remark', 'comment', 'description']);
 
-    if (!emailCol) throw new Error('Could not find an email column. Make sure a column header contains "email".');
+    // Log detected columns for debugging
+    console.log('Excel columns detected:', { headers, companyCol, emailCol, contactCol });
+
+    if (!emailCol) {
+      throw new Error(
+        `Could not find an email column. Found columns: ${headers.join(', ')}. Rename a column to include the word "email".`
+      );
+    }
 
     return rawRows
-      .map((row) => ({
-        company_name: companyCol ? String(row[companyCol] ?? '').trim() : '',
-        email: String(row[emailCol] ?? '').trim(),
-        contact_name: contactCol ? String(row[contactCol] ?? '').trim() : '',
-        notes: notesCol ? String(row[notesCol] ?? '').trim() : '',
-      }))
+      .map((row) => {
+        // Strip any "Label: " prefix from the email value (e.g. "Company: foo@bar.com")
+        const rawEmail = String(row[emailCol] ?? '').trim().replace(/^[^:@]+:\s*/, '');
+        const email = rawEmail;
+        const rawCompany = companyCol ? String(row[companyCol] ?? '').trim() : '';
+        const contactVal = contactCol ? String(row[contactCol] ?? '').trim() : '';
+        // Use contact column as company name if no dedicated company column
+        const company_name = rawCompany || contactVal || '';
+        return {
+          company_name,
+          email,
+          contact_name: '',
+          notes: notesCol ? String(row[notesCol] ?? '').trim() : '',
+        };
+      })
       .filter((r) => r.email && r.email.includes('@'));
   }
 
@@ -88,7 +103,11 @@ export default function ContactsPage() {
       if (!text) throw new Error(`Server returned empty response (status ${res.status})`);
       const data = JSON.parse(text);
       if (!res.ok) throw new Error(data.error ?? `Server error ${res.status}`);
-      alert(`Imported ${data.inserted} contacts from ${rows.length} rows.`);
+      if (data.inserted === 0) {
+        setCsvError(`Parsed ${rows.length} rows but imported 0 — all emails may already exist in your contacts.`);
+      } else {
+        alert(`Imported ${data.inserted} new contacts from ${rows.length} rows.${data.inserted < rows.length ? ` (${rows.length - data.inserted} skipped — already exist)` : ''}`);
+      }
       load();
     } catch (err) {
       setCsvError(err instanceof Error ? err.message : 'Failed to parse Excel file');
