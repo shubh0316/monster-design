@@ -13,6 +13,8 @@ interface Contact {
   created_at: string;
 }
 
+const inputCls = 'w-full bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-zinc-500';
+
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +61,6 @@ export default function ContactsPage() {
     const contactCol = find(['contact', 'person', 'first name', 'firstname', 'full name', 'fullname', 'name']);
     const notesCol = find(['note', 'remark', 'comment', 'description']);
 
-    // Log detected columns for debugging
     console.log('Excel columns detected:', { headers, companyCol, emailCol, contactCol });
 
     if (!emailCol) {
@@ -70,12 +71,10 @@ export default function ContactsPage() {
 
     return rawRows
       .map((row) => {
-        // Strip any "Label: " prefix from the email value (e.g. "Company: foo@bar.com")
         const rawEmail = String(row[emailCol] ?? '').trim().replace(/^[^:@]+:\s*/, '');
         const email = rawEmail;
         const rawCompany = companyCol ? String(row[companyCol] ?? '').trim() : '';
         const contactVal = contactCol ? String(row[contactCol] ?? '').trim() : '';
-        // Use contact column as company name if no dedicated company column
         const company_name = rawCompany || contactVal || '';
         return {
           company_name,
@@ -121,21 +120,21 @@ export default function ContactsPage() {
 
       <div className="grid md:grid-cols-2 gap-6 mb-8">
         {/* Add single contact */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-          <h2 className="font-semibold mb-4 text-zinc-300">Add Contact</h2>
+        <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5">
+          <h2 className="font-semibold mb-4 text-gray-700 dark:text-zinc-300">Add Contact</h2>
           <form onSubmit={addContact} className="space-y-3">
             <input required placeholder="Company Name *" value={form.company_name}
               onChange={(e) => setForm((f) => ({ ...f, company_name: e.target.value }))}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500" />
+              className={inputCls} />
             <input required type="email" placeholder="Email Address *" value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500" />
+              className={inputCls} />
             <input placeholder="Contact Name (optional)" value={form.contact_name}
               onChange={(e) => setForm((f) => ({ ...f, contact_name: e.target.value }))}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500" />
+              className={inputCls} />
             <input placeholder="Notes (optional)" value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-500" />
+              className={inputCls} />
             <button disabled={saving} type="submit"
               className="bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-semibold rounded-lg px-4 py-2 text-sm transition-colors">
               {saving ? 'Adding…' : 'Add Contact'}
@@ -144,34 +143,34 @@ export default function ContactsPage() {
         </div>
 
         {/* Excel import */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-          <h2 className="font-semibold mb-2 text-zinc-300">Import Excel File</h2>
-          <p className="text-zinc-500 text-sm mb-4">
-            Upload a <code className="text-orange-400">.xlsx</code> or <code className="text-orange-400">.xls</code> file.
-            The app will auto-detect columns containing <span className="text-zinc-300">email</span> and <span className="text-zinc-300">company</span>.
+        <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5">
+          <h2 className="font-semibold mb-2 text-gray-700 dark:text-zinc-300">Import Excel File</h2>
+          <p className="text-gray-400 dark:text-zinc-500 text-sm mb-4">
+            Upload a <code className="text-orange-500">xlsx</code> or <code className="text-orange-500">.xls</code> file.
+            The app will auto-detect columns containing <span className="text-gray-700 dark:text-zinc-300">email</span> and <span className="text-gray-700 dark:text-zinc-300">company</span>.
           </p>
-          <label className="cursor-pointer inline-block bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg px-4 py-2 text-sm transition-colors">
+          <label className="cursor-pointer inline-block bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-700 rounded-lg px-4 py-2 text-sm transition-colors">
             Choose Excel File
             <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleExcel} />
           </label>
-          {csvError && <p className="text-red-400 text-sm mt-3">{csvError}</p>}
-          <p className="text-zinc-600 text-xs mt-4">Duplicate emails are automatically skipped.</p>
+          {csvError && <p className="text-red-500 dark:text-red-400 text-sm mt-3">{csvError}</p>}
+          <p className="text-gray-300 dark:text-zinc-600 text-xs mt-4">Duplicate emails are automatically skipped.</p>
         </div>
       </div>
 
       {/* Contact table */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-zinc-800 flex justify-between items-center">
-          <span className="font-semibold text-zinc-300">{contacts.length} Contacts</span>
+      <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-zinc-800 flex justify-between items-center">
+          <span className="font-semibold text-gray-700 dark:text-zinc-300">{contacts.length} Contacts</span>
         </div>
         {loading ? (
-          <div className="p-8 text-zinc-500 text-sm text-center">Loading…</div>
+          <div className="p-8 text-gray-400 dark:text-zinc-500 text-sm text-center">Loading…</div>
         ) : contacts.length === 0 ? (
-          <div className="p-8 text-zinc-500 text-sm text-center">No contacts yet. Add one above or import a CSV.</div>
+          <div className="p-8 text-gray-400 dark:text-zinc-500 text-sm text-center">No contacts yet. Add one above or import a CSV.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-zinc-500 text-xs uppercase border-b border-zinc-800">
+              <thead className="text-gray-400 dark:text-zinc-500 text-xs uppercase border-b border-gray-200 dark:border-zinc-800">
                 <tr>
                   <th className="text-left px-5 py-3">Company</th>
                   <th className="text-left px-5 py-3">Email</th>
@@ -181,25 +180,25 @@ export default function ContactsPage() {
                   <th className="px-5 py-3"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800">
+              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
                 {contacts.map((c) => (
-                  <tr key={c.id} className="hover:bg-zinc-800/50 transition-colors">
+                  <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <td className="px-5 py-3 font-medium">{c.company_name}</td>
-                    <td className="px-5 py-3 text-zinc-400">{c.email}</td>
-                    <td className="px-5 py-3 text-zinc-400">{c.contact_name ?? '—'}</td>
+                    <td className="px-5 py-3 text-gray-500 dark:text-zinc-400">{c.email}</td>
+                    <td className="px-5 py-3 text-gray-500 dark:text-zinc-400">{c.contact_name ?? '—'}</td>
                     <td className="px-5 py-3">
-                      <span className={`text-xs font-medium ${c.emails_sent > 0 ? 'text-green-400' : 'text-zinc-600'}`}>
+                      <span className={`text-xs font-medium ${c.emails_sent > 0 ? 'text-green-500' : 'text-gray-300 dark:text-zinc-600'}`}>
                         {c.emails_sent > 0 ? `${c.emails_sent} sent` : 'Not sent'}
                       </span>
                     </td>
                     <td className="px-5 py-3">
-                      <span className={`text-xs font-medium ${c.replies_count > 0 ? 'text-orange-400' : 'text-zinc-600'}`}>
+                      <span className={`text-xs font-medium ${c.replies_count > 0 ? 'text-orange-500' : 'text-gray-300 dark:text-zinc-600'}`}>
                         {c.replies_count > 0 ? `${c.replies_count} repl.` : '—'}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <button onClick={() => deleteContact(c.id)}
-                        className="text-zinc-600 hover:text-red-400 text-xs transition-colors">
+                      <button type="button" onClick={() => deleteContact(c.id)}
+                        className="text-gray-300 dark:text-zinc-600 hover:text-red-500 text-xs transition-colors">
                         Remove
                       </button>
                     </td>
